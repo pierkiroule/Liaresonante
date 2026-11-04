@@ -1,0 +1,44 @@
+{
+  "name": "echo-resonance-locale",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ÉCHO •° — médiation projective conversationnelle avec une IA locale WebGPU.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc -b && vite build && node scripts/verify-build.mjs",
+    "preview": "vite preview --host 0.0.0.0",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "package": "python3 scripts/package.py",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@mlc-ai/web-llm": "0.2.87",
+    "lucide-react": "^0.577.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.1.0",
+    "@webgpu/types": "^0.1.66",
+    "fake-indexeddb": "^6.2.4",
+    "jsdom": "^27.1.0",
+    "prettier": "^3.9.10",
+    "typescript": "^5.9.3",
+    "vite": "8.3.5",
+    "vite-plugin-pwa": "2.0.0",
+    "vitest": "5.1.0",
+    "workbox-core": "^7.4.0",
+    "workbox-precaching": "^7.4.0",
+    "workbox-routing": "^7.4.0"
+  }
+}
