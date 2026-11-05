@@ -50,6 +50,35 @@ describe('interface sur données exclusivement fictives', () => {
     expect(button.disabled).toBe(true);
     expect(send).not.toHaveBeenCalled();
   });
+  it('affiche une panne du moteur directement dans le chat', () => {
+    renderPatient(vi.fn(), {
+      status: 'error',
+      progress: 0,
+      progressText: '',
+      error: 'Le Worker local s’est arrêté. Rechargez le modèle.',
+    });
+    expect(screen.getByRole('alert').textContent).toContain('Le Worker local s’est arrêté');
+  });
+  it('conserve le texte après un refus et empêche deux envois simultanés', async () => {
+    let reject!: (reason: Error) => void;
+    const send = vi.fn(
+      () =>
+        new Promise<void>((_, failure) => {
+          reject = failure;
+        }),
+    );
+    renderPatient(send);
+    const input = screen.getByLabelText('Votre message à ÉCHO') as HTMLTextAreaElement;
+    fireEvent.change(input, { target: { value: 'Un message fictif à conserver.' } });
+    fireEvent.submit(input.closest('form')!);
+    fireEvent.change(input, { target: { value: 'Un autre message fictif.' } });
+    fireEvent.submit(input.closest('form')!);
+    expect(send).toHaveBeenCalledOnce();
+    fireEvent.change(input, { target: { value: '' } });
+    reject(new Error('Enregistrement impossible.'));
+    await screen.findByText('Enregistrement impossible.');
+    expect(input.value).toBe('Un message fictif à conserver.');
+  });
   it('laisse un arrêt immédiat accessible pendant la génération', () => {
     const stop = vi.fn();
     render(
@@ -109,3 +138,24 @@ describe('interface sur données exclusivement fictives', () => {
     expect(screen.queryByText(session.messages[1].content)).toBeNull();
   });
 });
+
+function renderPatient(
+  onSend: (text: string) => Promise<void>,
+  engine: import('../src/types').EngineState = { status: 'ready', progress: 1, progressText: '' },
+) {
+  return render(
+    <PatientView
+      session={newSession(true)}
+      engine={engine}
+      busy={false}
+      onSend={onSend}
+      onStop={() => undefined}
+      onStart={() => undefined}
+      onEngine={() => undefined}
+      onPause={() => undefined}
+      onResume={() => undefined}
+      onErase={() => undefined}
+      omitted={0}
+    />,
+  );
+}
