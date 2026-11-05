@@ -35,6 +35,9 @@ export function PatientView({
   const end = useRef<HTMLDivElement>(null),
     textarea = useRef<HTMLTextAreaElement>(null);
   const nearBottom = useRef(true);
+  const submitting = useRef(false);
+  const currentSessionId = useRef(session?.id);
+  currentSessionId.current = session?.id;
   const hasMessages = Boolean(session?.messages.length);
   useEffect(() => {
     setDraft('');
@@ -46,16 +49,24 @@ export function PatientView({
   const canSend = Boolean(session && !session.paused && engine.status === 'ready' && !busy);
   async function submit(event?: FormEvent) {
     event?.preventDefault();
-    if (!canSend || !draft.trim()) return;
+    if (!canSend || submitting.current || !draft.trim()) return;
+    submitting.current = true;
+    const sessionId = session?.id;
+    const originalDraft = draft;
     const text = draft.trim();
     setDraft('');
     setError('');
     try {
       await onSend(text);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Le message n’a pas pu être traité.');
+      if (currentSessionId.current === sessionId) {
+        setDraft((current) => current || originalDraft);
+        setError(err instanceof Error ? err.message : 'Le message n’a pas pu être traité.');
+      }
+    } finally {
+      submitting.current = false;
     }
-    textarea.current?.focus();
+    if (currentSessionId.current === sessionId) textarea.current?.focus();
   }
   return (
     <section
@@ -176,9 +187,9 @@ export function PatientView({
         </div>
       )}
       <div className="composer-area">
-        {error && (
+        {(error || engine.error) && (
           <p className="error-text" role="alert">
-            {error}
+            {error || engine.error}
           </p>
         )}
         {omitted > 0 && (
